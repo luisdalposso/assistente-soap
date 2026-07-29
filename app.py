@@ -8,6 +8,21 @@ st.set_page_config(
     layout="centered"
 )
 
+# --- CSS PERSONALIZADO PARA REMOVER SCROLL E FORÇAR QUEBRA DE LINHA ---
+st.markdown("""
+<style>
+pre {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-y: visible !important;
+}
+div[data-testid="stCodeBlock"] {
+    max-height: none !important;
+    overflow: visible !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 def check_password():
     def password_entered():
         if st.session_state["password"] == st.secrets["APP_PASSWORD"]:
@@ -94,14 +109,11 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
                 
                 st.session_state["resultado_so"] = response.choices[0].message.content
                 st.success("Prontuário estruturado com sucesso!")
-                
-                # Exibe o pop-up (toast) com a mensagem de lembrete
                 st.toast("Lembre de tomar Água! 💧", icon="🚰")
                 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
 
-# Se houver resultado, exibe os blocos individualmente com facilidade de cópia
 if st.session_state["resultado_so"]:
     texto_total = st.session_state["resultado_so"]
     
