@@ -1,4 +1,3 @@
-import re
 import streamlit as st
 from openai import OpenAI
 
@@ -7,21 +6,6 @@ st.set_page_config(
     page_icon="🩺",
     layout="centered"
 )
-
-# --- CSS PERSONALIZADO PARA REMOVER SCROLL E FORÇAR QUEBRA DE LINHA ---
-st.markdown("""
-<style>
-pre {
-    white-space: pre-wrap !important;
-    word-break: break-word !important;
-    overflow-y: visible !important;
-}
-div[data-testid="stCodeBlock"] {
-    max-height: none !important;
-    overflow: visible !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 def check_password():
     def password_entered():
@@ -114,39 +98,15 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
 
+# Exibe o resultado limpo e o botão de download
 if st.session_state["resultado_so"]:
-    texto_total = st.session_state["resultado_so"]
+    st.markdown(st.session_state["resultado_so"])
     
-    def extrair_secao(titulo, texto):
-        match = re.search(rf"(###\s*{titulo}.*?)(?=###|$)", texto, re.DOTALL | re.IGNORECASE)
-        return match.group(1).strip() if match else ""
-
-    sec_s = extrair_secao(r"Subjetivo\s*\(S\)", texto_total)
-    sec_o = extrair_secao(r"Objetivo\s*\(O\)", texto_total)
-    sec_i = extrair_secao(r"Informações\s*\(I\)", texto_total)
-
-    st.markdown("### Resultados Separados por Bloco")
-    
-    if sec_s:
-        st.subheader("Subjetivo (S)")
-        st.code(sec_s, language="markdown")
-        
-    if sec_o:
-        st.subheader("Objetivo (O)")
-        st.code(sec_o, language="markdown")
-        
-    if sec_i:
-        st.subheader("Informações (I)")
-        st.code(sec_i, language="markdown")
-
     st.divider()
     
-    st.subheader("📋 Copiar Tudo de Uma Só Vez")
-    st.code(texto_total, language="markdown")
-    
     st.download_button(
-        label="📥 Baixar Prontuário Completo (.txt)",
-        data=texto_total,
+        label="📥 Baixar Prontuário (.txt)",
+        data=st.session_state["resultado_so"],
         file_name="prontuario_soap.txt",
         mime="text/plain",
         use_container_width=True
