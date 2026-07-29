@@ -95,6 +95,9 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
                 st.session_state["resultado_so"] = response.choices[0].message.content
                 st.success("Prontuário estruturado com sucesso!")
                 
+                # Exibe o pop-up (toast) com a mensagem de lembrete
+                st.toast("Lembre de tomar Água! 💧", icon="🚰")
+                
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
 
@@ -102,7 +105,6 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
 if st.session_state["resultado_so"]:
     texto_total = st.session_state["resultado_so"]
     
-    # Função auxiliar para extrair cada seção via regex
     def extrair_secao(titulo, texto):
         match = re.search(rf"(###\s*{titulo}.*?)(?=###|$)", texto, re.DOTALL | re.IGNORECASE)
         return match.group(1).strip() if match else ""
@@ -127,11 +129,9 @@ if st.session_state["resultado_so"]:
 
     st.divider()
     
-    # Bloco para copiar tudo de uma vez
     st.subheader("📋 Copiar Tudo de Uma Só Vez")
     st.code(texto_total, language="markdown")
     
-    # Botão de download
     st.download_button(
         label="📥 Baixar Prontuário Completo (.txt)",
         data=texto_total,
