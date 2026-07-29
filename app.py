@@ -30,14 +30,14 @@ def check_password():
 if not check_password():
     st.stop()
 
-st.title("🩺 Assistente SOAP Clínico")
-st.caption("Cole a transcrição da consulta para gerar a estrutura SOAP e Informações.")
+st.title("🩺 Assistente SOAP Clínico - Soniély")
+st.caption("Cole a transcrição da consulta")
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 transcricao = st.text_area(
     "Transcrição da Consulta:",
-    placeholder="Cole aqui o texto copiado do gravador do iPhone...",
+    placeholder="Cole aqui o texto",
     height=200
 )
 
@@ -45,7 +45,7 @@ transcricao = st.text_area(
 if "resultado_so" not in st.session_state:
     st.session_state["resultado_so"] = ""
 
-if st.button("Gerar Estrutura e Informações", type="primary", use_container_width=True):
+if st.button("Gerar SOAP", type="primary", use_container_width=True):
     if not transcricao.strip():
         st.warning("Por favor, cole a transcrição antes de gerar.")
     else:
@@ -58,12 +58,26 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
                             "role": "system",
                             "content": (
                                 "Você é um assistente médico especialista em Medicina de Família e Psiquiatria. "
-                                "A partir da transcrição de consulta fornecida, extraia e estruture estritamente nos campos solicitados. "
-                                "Mantenha o tom técnico, objetivo e clínico. Não invente dados.\n\n"
-                                "Formate a saída exatamente com estes três blocos:\n"
-                                "### Subjetivo (S)\n[Relato do paciente, HMA, queixas principais e percepções]\n\n"
-                                "### Objetivo (O)\n[Sinais vitais, exames físicos narrados ou dados mensuráveis citados]\n\n"
-                                "### Informações (I)\n[Informações pessoais, familiares, relacionamentos, profissão, quantidade de filhos e contexto social relevantes para o diagnóstico, estruturadas em tópicos]"
+                                "A partir da transcrição de consulta fornecida, extraia e estruture estritamente nos três blocos abaixo. "
+                                "Mantenha tom técnico, objetivo e clínico. Não invente dados; se algo não estiver na transcrição, escreva 'não informado'. "
+                                "Se houver ideação suicida ativa ou plano, inclua imediatamente recomendação de busca de emergência. "
+                                "Ignore trechos irrelevantes (conversas sociais, piadas) a menos que indiquem humor ou risco.\n\n"
+                                "Formate a saída exatamente assim:\n\n"
+                                "### Subjetivo (S)\n"
+                                "- Queixa principal: ...\n"
+                                "- História da doença atual: ...\n"
+                                "- Histórico de doenças: ...\n"
+                                "- Sintomas relevantes: ...\n"
+                                "- Ideação suicida: presente/ausente; detalhes se presentes.\n\n"
+                                "### Objetivo (O)\n"
+                                "- Sinais vitais relatados/examinados: ...\n"
+                                "- Achados do exame físico narrados: ...\n"
+                                "- Exames solicitados/valores objetivos citados: ...\n\n"
+                                "### Informações (I)\n"
+                                "- Idade; estado civil; profissão; filhos: ...\n"
+                                "- Histórico familiar relevante: ...\n"
+                                "- Uso de substâncias: álcool, tabaco, benzodiazepínicos (quantidade/frequência)\n"
+                                "- Impacto funcional e social: ..."
                             )
                         },
                         {
@@ -71,7 +85,11 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
                             "content": transcricao
                         }
                     ],
-                    temperature=0.2
+                    temperature=0.2,
+                    max_tokens=2000,
+                    top_p=0.9,
+                    frequency_penalty=0.0,
+                    presence_penalty=0.0
                 )
                 
                 # Salva na sessão para persistir mesmo após cliques em botões
