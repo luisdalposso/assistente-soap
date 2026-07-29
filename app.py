@@ -31,7 +31,7 @@ if not check_password():
     st.stop()
 
 st.title("🩺 Assistente SOAP Clínico")
-st.caption("Cole a transcrição da consulta para gerar a estrutura SOAP instantaneamente.")
+st.caption("Cole a transcrição da consulta para gerar a estrutura SOAP e Informações.")
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -41,7 +41,7 @@ transcricao = st.text_area(
     height=200
 )
 
-if st.button("Gerar Estrutura SOAP", type="primary", use_container_width=True):
+if st.button("Gerar Estrutura e Informações", type="primary", use_container_width=True):
     if not transcricao.strip():
         st.warning("Por favor, cole a transcrição antes de gerar.")
     else:
@@ -56,9 +56,10 @@ if st.button("Gerar Estrutura SOAP", type="primary", use_container_width=True):
                                 "Você é um assistente médico especialista em Medicina de Família e Psiquiatria. "
                                 "A partir da transcrição de consulta fornecida, extraia e estruture estritamente nos campos solicitados. "
                                 "Mantenha o tom técnico, objetivo e clínico. Não invente dados.\n\n"
-                                "Formate a saída exatamente com estes dois blocos:\n"
+                                "Formate a saída exatamente com estes três blocos:\n"
                                 "### Subjetivo (S)\n[Relato do paciente, HMA, queixas principais e percepções]\n\n"
-                                "### Objetivo (O)\n[Sinais vitais, exames físicos narrados ou dados mensuráveis citados]"
+                                "### Objetivo (O)\n[Sinais vitais, exames físicos narrados ou dados mensuráveis citados]\n\n"
+                                "### Informações (I)\n[Informações pessoais, familiares, relacionamentos, profissão, quantidade de filhos e contexto social relevantes para o diagnóstico, estruturadas em tópicos]"
                             )
                         },
                         {
@@ -68,10 +69,23 @@ if st.button("Gerar Estrutura SOAP", type="primary", use_container_width=True):
                     ],
                     temperature=0.2
                 )
-
+                
                 resultado_so = response.choices[0].message.content
                 st.success("Prontuário estruturado com sucesso!")
+                
+                # Exibição do resultado na tela
                 st.markdown(resultado_so)
-
+                
+                st.divider()
+                
+                # Botão para baixar o arquivo .txt (compatível com Word)
+                st.download_button(
+                    label="📥 Baixar Prontuário (.txt)",
+                    data=resultado_so,
+                    file_name="prontuario_soap.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+                
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
