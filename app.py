@@ -41,6 +41,10 @@ transcricao = st.text_area(
     height=200
 )
 
+# Inicializa a memória de sessão para o resultado
+if "resultado_so" not in st.session_state:
+    st.session_state["resultado_so"] = ""
+
 if st.button("Gerar Estrutura e Informações", type="primary", use_container_width=True):
     if not transcricao.strip():
         st.warning("Por favor, cole a transcrição antes de gerar.")
@@ -70,22 +74,23 @@ if st.button("Gerar Estrutura e Informações", type="primary", use_container_wi
                     temperature=0.2
                 )
                 
-                resultado_so = response.choices[0].message.content
+                # Salva na sessão para persistir mesmo após cliques em botões
+                st.session_state["resultado_so"] = response.choices[0].message.content
                 st.success("Prontuário estruturado com sucesso!")
-                
-                # Exibição do resultado na tela
-                st.markdown(resultado_so)
-                
-                st.divider()
-                
-                # Botão para baixar o arquivo .txt (compatível com Word)
-                st.download_button(
-                    label="📥 Baixar Prontuário (.txt)",
-                    data=resultado_so,
-                    file_name="prontuario_soap.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
                 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
+
+# Exibe o resultado e o botão de download sempre que houver texto salvo na sessão
+if st.session_state["resultado_so"]:
+    st.markdown(st.session_state["resultado_so"])
+    
+    st.divider()
+    
+    st.download_button(
+        label="📥 Baixar Prontuário (.txt)",
+        data=st.session_state["resultado_so"],
+        file_name="prontuario_soap.txt",
+        mime="text/plain",
+        use_container_width=True
+    )
