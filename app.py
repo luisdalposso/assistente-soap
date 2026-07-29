@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 from openai import OpenAI
 
@@ -30,22 +31,21 @@ def check_password():
 if not check_password():
     st.stop()
 
-st.title("🩺 Assistente SOAP Clínico - Soniély")
-st.caption("Cole a transcrição da consulta")
+st.title("🩺 Assistente SOAP Clínico")
+st.caption("Cole a transcrição da consulta para gerar a estrutura SOAP e Informações.")
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 transcricao = st.text_area(
     "Transcrição da Consulta:",
-    placeholder="Cole aqui o texto",
+    placeholder="Cole aqui o texto copiado do gravador do iPhone...",
     height=200
 )
 
-# Inicializa a memória de sessão para o resultado
 if "resultado_so" not in st.session_state:
     st.session_state["resultado_so"] = ""
 
-if st.button("Gerar SOAP", type="primary", use_container_width=True):
+if st.button("Gerar Estrutura e Informações", type="primary", use_container_width=True):
     if not transcricao.strip():
         st.warning("Por favor, cole a transcrição antes de gerar.")
     else:
@@ -92,22 +92,49 @@ if st.button("Gerar SOAP", type="primary", use_container_width=True):
                     presence_penalty=0.0
                 )
                 
-                # Salva na sessão para persistir mesmo após cliques em botões
                 st.session_state["resultado_so"] = response.choices[0].message.content
                 st.success("Prontuário estruturado com sucesso!")
                 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao processar: {e}")
 
-# Exibe o resultado e o botão de download sempre que houver texto salvo na sessão
+# Se houver resultado, exibe os blocos individualmente com facilidade de cópia
 if st.session_state["resultado_so"]:
-    st.markdown(st.session_state["resultado_so"])
+    texto_total = st.session_state["resultado_so"]
     
+    # Função auxiliar para extrair cada seção via regex
+    def extrair_secao(titulo, texto):
+        match = re.search(rf"(###\s*{titulo}.*?)(?=###|$)", texto, re.DOTALL | re.IGNORECASE)
+        return match.group(1).strip() if match else ""
+
+    sec_s = extrair_secao(r"Subjetivo\s*\(S\)", texto_total)
+    sec_o = extrair_secao(r"Objetivo\s*\(O\)", texto_total)
+    sec_i = extrair_secao(r"Informações\s*\(I\)", texto_total)
+
+    st.markdown("### Resultados Separados por Bloco")
+    
+    if sec_s:
+        st.subheader("Subjetivo (S)")
+        st.code(sec_s, language="markdown")
+        
+    if sec_o:
+        st.subheader("Objetivo (O)")
+        st.code(sec_o, language="markdown")
+        
+    if sec_i:
+        st.subheader("Informações (I)")
+        st.code(sec_i, language="markdown")
+
     st.divider()
     
+    # Bloco para copiar tudo de uma vez
+    st.subheader("📋 Copiar Tudo de Uma Só Vez")
+    st.code(texto_total, language="markdown")
+    
+    # Botão de download
     st.download_button(
-        label="📥 Baixar Prontuário (.txt)",
-        data=st.session_state["resultado_so"],
+        label="📥 Baixar Prontuário Completo (.txt)",
+        data=texto_total,
         file_name="prontuario_soap.txt",
         mime="text/plain",
         use_container_width=True
